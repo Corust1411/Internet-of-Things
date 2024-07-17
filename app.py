@@ -31,57 +31,55 @@ app.add_middleware(
 
 # https://fastapi.tiangolo.com/tutorial/sql-databases/#crud-utils
 
-@router_v1.get('/books')
-async def get_books(db: Session = Depends(get_db)):
-    return db.query(models.Book).all()
-
-@router_v1.get('/books/{book_id}')
-async def get_book(book_id: int, db: Session = Depends(get_db)):
-    return db.query(models.Book).filter(models.Book.id == book_id).first()
-
-@router_v1.post('/books')
-async def create_book(book: dict, response: Response, db: Session = Depends(get_db)):
-    # TODO: Add validation
-    newbook = models.Book(title=book['title'], author=book['author'], year=book['year'], is_published=book['is_published'])
-    db.add(newbook)
-    db.commit()
-    db.refresh(newbook)
-    response.status_code = 201
-    return newbook
-
-# @router_v1.patch('/books/{book_id}')
-# async def update_book(book_id: int, book: dict, db: Session = Depends(get_db)):
-#     pass
-
-# @router_v1.delete('/books/{book_id}')
-# async def delete_book(book_id: int, db: Session = Depends(get_db)):
-#     pass
-
 @router_v1.get('/students')
 async def get_students(db: Session = Depends(get_db)):
     return db.query(models.Student).all()
 
 @router_v1.get('/students/{student_id}')
-async def get_students(student_id: int, db: Session = Depends(get_db)):
+async def get_student(student_id: int, db: Session = Depends(get_db)):
     return db.query(models.Student).filter(models.Student.id == student_id).first()
 
 @router_v1.post('/students')
 async def create_student(student: dict, response: Response, db: Session = Depends(get_db)):
     # TODO: Add validation
-    newStudent = models.Student(name=student['name'], surname=student['surname'], dob=student['dob'], age=student['age'], sex=student['sex'])
-    db.add(newStudent)
+    new_student = models.Student(name=student['name'], surname=student['surname'], DOB=student['DOB'], age=student['age'], sex=student['sex'])
+    db.add(new_student)
     db.commit()
-    db.refresh(newStudent)
+    db.refresh(new_student)
     response.status_code = 201
-    return newStudent
+    return new_student
 
-# @router_v1.patch('/students/{student_id}')
-# async def update_student(student_id: int, student: dict, db: Session = Depends(get_db)):
-#     pass
+@router_v1.put('/students/{student_id}')
+async def update_student(student_id: int, student: dict, response: Response,  db: Session = Depends(get_db)):
+    existing_student = db.query(models.Student).filter(models.Student.id == student_id).first()
+    if not existing_student:
+        response.status_code = 404
+        return response.status_code
+    
+    existing_student.name = student['name']
+    existing_student.surname = student['surname']
+    existing_student.DOB = student['DOB']
+    existing_student.age = student['age']
+    existing_student.sex = student['sex']
+    
+    db.commit()
+    db.refresh(existing_student)
+    return existing_student
 
-# @router_v1.delete('/students/{student_id}')
-# async def delete_student(student_id: int, db: Session = Depends(get_db)):
-#     pass
+@router_v1.delete('/students/{student_id}')
+async def delete_student(student_id: int, response: Response, db: Session = Depends(get_db)):
+    existing_student = db.query(models.Student).filter(models.Student.id == student_id).first()
+    if not existing_student:
+        response.status_code = 404
+        return response.status_code
+    
+    db.delete(existing_student)
+    db.commit()
+    response.status_code = 204
+    return response.status_code
+
+app.include_router(router_v1)
+
 if __name__ == '__main__':
     import uvicorn
     uvicorn.run(app)
