@@ -1,2 +1,2 @@
 # Internet-of-Things
-works in "Internet of Things (Network)" class
+sample of IOT class app for vercel api deployment with postgre database
